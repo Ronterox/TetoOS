@@ -1,26 +1,24 @@
-; Simple 16-bit x86 BIOS bootloader that prints "Hello World"
-; Assemble with: nasm -f bin bootloader.asm -o bootloader.bin
+mov ah, 0x0e ; tty mode
+mov al, 'H'
+int 0x10
 
-org 0x7C00          ; BIOS loads bootloader at this address
+mov ah, 0x0e ; tty mode
+mov al, 'E'
+int 0x10
 
-start:
-    xor ax, ax      ; Set up DS to 0
-    mov ds, ax
-    mov si, message ; Load message address
+mov ah, 0x0e ; tty mode
+mov al, 'L'
+int 0x10
 
-print_char:
-    lodsb           ; Load next character into AL
-    or al, al       ; Check if null terminator
-    jz halt         ; If zero, halt
-    mov ah, 0x0E    ; BIOS teletype function
-    int 0x10        ; Call BIOS video interrupt
-    jmp print_char  ; Repeat for next character
+mov ah, 0x0e ; tty mode
+mov al, 'L'
+int 0x10
 
-halt:
-    jmp halt        ; Infinite loop
+mov ah, 0x0e ; tty mode
+mov al, 'O'
+int 0x10
 
-message: db "Hello World!", 0
+jmp $
 
-; Boot signature (must be at end of 512 bytes)
-times 510 - ($ - $$) db 0
-dw 0xAA55
+times 510 - ($ - $$) db 0 ; 512 bytes total we need 2 at the end so 510
+dw 0xAA55 ; Ocuppies word (2 bytes)
