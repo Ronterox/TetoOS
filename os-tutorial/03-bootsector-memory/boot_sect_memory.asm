@@ -24,8 +24,8 @@ int 0x10
 ; A register can't be used as source and destination for the same command.
 mov al, "3"
 int 0x10
-mov bx, 0x7c00
-add bx, the_secret
+mov bx, the_secret
+add bx, 0x7c00
 mov al, [bx]
 int 0x10
 
@@ -35,16 +35,16 @@ int 0x10
 ; every time we change the code
 mov al, "4"
 int 0x10
-; Base offset of BIOS for bootable is 0x7c00
-mov al, [0x7c2b] ; echo -n 'X' | xxd || xxd -a -c 1 || 20 + (11 to hex) = 0x20 + 0xB = 0x2B
+mov al, [0x7c2d]
 int 0x10
+
+
+jmp $ ; infinite loop
 
 the_secret:
     ; ASCII code 0x58 ('X') is stored just before the zero-padding.
     ; On this code that is at byte 0x2d (check it out using 'xxd file.bin')
     db "X"
-
-jmp $ ; infinite loop
 
 ; zero padding and magic bios number
 times 510-($-$$) db 0
