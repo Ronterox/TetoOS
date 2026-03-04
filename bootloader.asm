@@ -1,26 +1,50 @@
 [org 0x7c00] ; bootloader offset
-    mov bp, 0x9000 ; set the stack
-    mov sp, bp
 
-    mov bx, MSG_REAL_MODE
-    call print ; This will be written after the BIOS messages
+mov bx, HELLOWORD
 
-    call switch_to_pm
-    jmp $ ; this will actually never be executed
+call print
+call print
 
-%include "boot_sect_print.asm"
-%include "32bit-gdt.asm"
-%include "32bit-print.asm"
-%include "32bit-switch.asm"
+jmp $
 
-[bits 32]
-BEGIN_PM: ; after the switch we will get here
-    mov ebx, MSG_PROT_MODE
-    call print_string_pm ; Note that this will be written at the top left corner
-    jmp $
+print:
+	pusha
 
-MSG_REAL_MODE db "Started in 16-bit real mode", 0
-MSG_PROT_MODE db "Loaded 32-bit protected mode", 0
+	mov ah, 0xe
+	mov al, [bx]
+
+loop:
+	cmp al, 0
+	je end
+
+	int 0x10
+
+	inc bx
+	mov al, [bx]
+
+	jmp loop
+
+end:
+	mov al, 0xA
+	int 0x10
+
+	mov al, 0xD
+	int 0x10
+
+	popa
+	ret
+
+; %include "boot_sect_print.asm"
+; %include "32bit-gdt.asm"
+; %include "32bit-print.asm"
+; %include "32bit-switch.asm"
+
+; [bits 32]
+
+; MSG_REAL_MODE db "Started in 16-bit real mode", 0
+; MSG_PROT_MODE db "Loaded 32-bit protected mode", 0
+
+HELLOWORD db "Hola Alberto!", 0
 
 ; bootsector
 times 510-($-$$) db 0
