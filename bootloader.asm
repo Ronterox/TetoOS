@@ -3,25 +3,8 @@
 mov bp, 0x8000
 mov sp, bp
 
-mov bx, 0x1234
-call print_hex
-
-mov bx, 0x9876
-call print_hex
-
-mov bx, 0xABCD
-call print_hex
-
-mov bx, 0xdede
-call print_hex
-
-mov bx, 0xfafa
-call print_hex
-
 mov bx, 0x7c00
 call print_hex
-
-jmp $
 
 mov bx, MSG_REAL_MODE
 call print

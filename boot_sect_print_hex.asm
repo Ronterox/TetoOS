@@ -28,8 +28,7 @@ hex_loop:
 	add dx, 0x7
 
 step2:
-	mov di, HEX_OUT
-	add di, 6
+	mov di, HEX_OUT + 6
 	sub di, cx
 	mov [di], dl
 
