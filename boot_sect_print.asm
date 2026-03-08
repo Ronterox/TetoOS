@@ -1,13 +1,18 @@
+
 print:
+	pusha
 
-; keep this in mind:
-; while (string[i] != 0) { print string[i]; i++ }
+loop:
+	mov al, [bx]
+	cmp al, 0
+	je end
 
-; the comparison for string end (null byte)
-start:
+	mov ah, 0xE ; Is not ensured ah will be kept the same after int 0x10
+	int 0x10
 
-done:
+	inc bx
+	jmp loop
 
-
-
-print_nl:
+end:
+	popa
+	ret

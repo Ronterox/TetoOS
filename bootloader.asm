@@ -1,45 +1,28 @@
 [org 0x7c00] ; bootloader offset
 
+mov bp, 0x8000
+mov sp, bp
+
 mov bx, MSG_REAL_MODE
 call print
 
-jmp $
+call switch_to_pm
+jmp $ ; just in case
 
-print:
-	pusha
+%include "boot_sect_print.asm"
+%include "32bit-gdt.asm"
+%include "32bit-print.asm"
+%include "32bit-switch.asm"
 
-	mov ah, 0xe
-	mov al, [bx]
+[bits 32]
+BEGIN_PM:
+	mov ebx, MSG_PROT_MODE
+	call print_pm
+	jmp $
 
-loop:
-	cmp al, 0
-	je end
+%define NL 0xA, 0xD ; \n, \r
 
-	int 0x10
-
-	inc bx
-	mov al, [bx]
-
-	jmp loop
-
-end:
-	mov al, 0xA
-	int 0x10
-
-	mov al, 0xD
-	int 0x10
-
-	popa
-	ret
-
-; %include "boot_sect_print.asm"
-; %include "32bit-gdt.asm"
-; %include "32bit-print.asm"
-; %include "32bit-switch.asm"
-
-; [bits 32]
-
-MSG_REAL_MODE db "Started in 16-bit real mode", 0
+MSG_REAL_MODE db "Started in 16-bit real mode", NL, 0
 MSG_PROT_MODE db "Loaded 32-bit protected mode", 0
 
 ; bootsector

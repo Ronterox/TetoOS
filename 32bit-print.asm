@@ -1,11 +1,26 @@
 [bits 32] ; using 32-bit protected mode
 
 ; this is how constants are defined
-VIDEO_MEMORY
-WHITE_ON_BLACK
+VIDEO_MEMORY equ 0xB8000
+WHITE_ON_BLACK equ 0x0F
 
-print_string_pm:
+print_pm:
+	pusha
+	mov edi, VIDEO_MEMORY
 
-print_string_pm_loop:
+loop_pm:
+	mov ah, WHITE_ON_BLACK
+	mov al, [ebx]
 
-print_string_pm_done:
+	cmp al, 0
+	je done_pm
+
+	mov [edi], ax
+	add edi, 2 ; 2 bytes each vid memory block
+	inc ebx
+
+	jmp loop_pm
+
+done_pm:
+	popa
+	ret
