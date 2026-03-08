@@ -14,23 +14,19 @@ hex_loop:
 	inc cx
 
 	mov ax, bx
-	xor dx, dx
+	and ax, 0x000F ; everything zero but the last byte
 
-	mov si, 0x10 ; 16 hex digits
-	div si ; divs ax, result on ax, rem in dx
+	add al, '0' ; Turn into ascii
+	cmp al, 0x39
 
-	mov bx, ax ; update new  0x1234 -> 0x123
-	add dx, '0' ; Turn into ascii
-
-	cmp dx, 0x39
 	jle step2
-
-	add dx, 0x7
+	add ax, 0x7
 
 step2:
 	mov di, HEX_OUT + 6
 	sub di, cx
-	mov [di], dl
+	mov [di], al
+	ror bx, 4
 
 	jmp hex_loop
 
