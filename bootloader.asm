@@ -1,5 +1,7 @@
 [org 0x7c00] ; bootloader offset
 
+KERNEL_OFFSET equ 0x1000
+
 mov [BOOT_DRIVE], dl
 mov bp, 0x8000
 mov sp, bp
@@ -10,20 +12,7 @@ call print_hex
 mov bx, MSG_REAL_MODE
 call print
 
-mov bx, 0x9000
-mov dh, 2 ; read 2 sectors
-mov dl, [BOOT_DRIVE]
-call disk_read
-
-mov bx, MSG_DISK_READ
-call print
-
-mov bx, [0x9000]
-call print_hex
-
-mov bx, [0x9000 + 512]
-call print_hex
-
+call load_kernel
 call switch_to_pm
 jmp $ ; just in case
 
@@ -35,15 +24,26 @@ jmp $ ; just in case
 %include "32bit-print.asm"
 %include "32bit-switch.asm"
 
+[bits 16]
+load_kernel:
+	mov bx, MSG_KERNEL_LOAD
+	call print
+
+	mov bx, KERNEL_OFFSET
+	mov dh, 2
+	mov dl, [BOOT_DRIVE]
+	call disk_read
+
+	ret
+
 [bits 32]
 BEGIN_PM:
 	mov ebx, MSG_PROT_MODE
 	call print_pm
 	jmp $
 
-
 MSG_REAL_MODE db "Started in 16-bit real mode", NL, 0
-MSG_DISK_READ db "Disk read successfully!", NL, 0
+MSG_KERNEL_LOAD db "Loading kernel into memory...", NL, 0
 
 MSG_PROT_MODE db "Loaded 32-bit protected mode", 0
 
@@ -52,6 +52,3 @@ BOOT_DRIVE db 0
 ; bootsector
 times 510-($-$$) db 0
 dw 0xaa55
-
-times 256 dw 0xdada
-times 256 dw 0xface

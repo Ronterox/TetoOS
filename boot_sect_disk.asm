@@ -10,6 +10,9 @@ disk_read:
 	jmp disk_loop
 
 disk_error:
+	cmp cx, RETRIES
+	jl disk_loop
+
 	mov bx, DISK_ERROR
 	call print
 
@@ -17,17 +20,14 @@ disk_error:
 	mov bl, ah
 	call print_hex
 
-	cmp cx, RETRIES
-	jl disk_loop
-
 	jmp disk_done
 
 sectors_error:
-	mov bx, SECTORS_ERROR
-	call print
-
 	cmp cx, RETRIES
 	jl disk_loop
+
+	mov bx, SECTORS_ERROR
+	call print
 
 	jmp disk_done
 

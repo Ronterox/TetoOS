@@ -1,3 +1,5 @@
+; [bits 32] when is a data structure it doesn't really matter
+
 gdt_start: ; don't remove the labels, they're needed to compute sizes and jumps
 	dd 0x0
 	dd 0x0
