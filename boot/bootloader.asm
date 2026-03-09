@@ -17,12 +17,12 @@ call switch_to_pm
 jmp $ ; just in case
 
 %define NL 0xA, 0xD ; \n, \r
-%include "boot_sect_print_hex.asm"
-%include "boot_sect_print.asm"
-%include "boot_sect_disk.asm"
-%include "32bit-gdt.asm"
-%include "32bit-print.asm"
-%include "32bit-switch.asm"
+%include "boot/boot_sect_print_hex.asm"
+%include "boot/boot_sect_print.asm"
+%include "boot/boot_sect_disk.asm"
+%include "boot/32bit-gdt.asm"
+%include "boot/32bit-print.asm"
+%include "boot/32bit-switch.asm"
 
 [bits 16]
 load_kernel:

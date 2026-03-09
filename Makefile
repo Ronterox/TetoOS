@@ -1,4 +1,5 @@
-all: run clean
+C_SOURCES = $(wildcard kernel/*.c)
+OBJS = ${C_SOURCES:.c=.o}
 
 KERNEL_OFFSET = 0x1000
 
@@ -14,25 +15,22 @@ CFLAGS = -g -m32 -ffreestanding -fno-pic
 # $< first dependency
 # $@ target
 
+run-os: run clean
+run-debug: debug clean
+
 # first rule runs by default
-os-image.bin: bootloader.bin kernel.bin
+os-image.bin: boot/bootloader.bin kernel.bin
 	cat $^ > $@
 
-bootloader.bin: bootloader.asm
-	${ASM} $^ -f bin -o $@ -l $<.lst || (cat $<.lst | rg error -B 5; exit 1)
+run: os-image.bin
+	${QEMU} $<
 
-kernel.o: kernel.c
-	${CC} ${CFLAGS} -c $^ -o $@
-
-kernel_entry.o: kernel_entry.asm
-	${ASM} $^ -f elf -o $@
-
-kernel.bin: kernel_entry.o kernel.o
+kernel.bin: boot/kernel_entry.o ${OBJS}
 	# kernel main at 0x1000
 	${LINKER} -o $@ -Ttext ${KERNEL_OFFSET} $^ --oformat binary
 
 # debugging purposes
-kernel.elf: kernel_entry.o kernel.o
+kernel.elf: boot/kernel_entry.o ${OBJS}
 	${LINKER} -o $@ -Ttext ${KERNEL_OFFSET} $^
 
 # connection to qemu and load our kernel-object file with symbols
@@ -40,10 +38,15 @@ debug: os-image.bin kernel.elf
 	${QEMU} -s $< &
 	${GDB} -ex "target remote localhost:1234" -ex "symbol-file kernel.elf"
 
-run: os-image.bin
-	${QEMU} $<
+%.o: %.c
+	${CC} ${CFLAGS} -c $^ -o $@
 
-run-debug: debug clean
+%.o: %.asm
+	${ASM} $^ -f elf -l $<.lst -o $@ || (cat $<.lst | rg error -B 5; exit 1)
+
+%.bin: %.asm
+	${ASM} $^ -f bin -l $<.lst -o $@ || (cat $<.lst | rg error -B 5; exit 1)
 
 clean:
-	rm -f *.bin *.lst *.o
+	rm -f *.bin *.dis *.o *.elf *.lst
+	rm -f boot/*.bin boot/*.lst boot/*.o kernel/*.o drivers/*.o
