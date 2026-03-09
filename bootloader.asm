@@ -40,6 +40,7 @@ load_kernel:
 BEGIN_PM:
 	mov ebx, MSG_PROT_MODE
 	call print_pm
+	call KERNEL_OFFSET ; this gives control to the kernel
 	jmp $
 
 MSG_REAL_MODE db "Started in 16-bit real mode", NL, 0
