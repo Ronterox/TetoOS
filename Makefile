@@ -9,7 +9,7 @@ LINKER = ld -m elf_i386
 GDB = gdb
 QEMU = qemu-system-i386
 
-CFLAGS = -g -m32 -ffreestanding -fno-pic
+CFLAGS = -masm=intel -g -m32 -ffreestanding -fno-pic
 
 # $^ prerequisites
 # $< first dependency
