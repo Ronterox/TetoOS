@@ -2,8 +2,8 @@
 #include <stdint.h>
 
 #define VGA_MEMORY 0xB8000
-#define MAX_ROWS 80
-#define MAX_COLS 25
+#define MAX_COLS 80
+#define MAX_ROWS 25
 #define WHITE_ON_BLACK 0x0f
 
 #define VGA_FUNC 0x3d4
@@ -46,6 +46,8 @@ void clear_screen() {
 		vga[i] = ' ';
 		vga[i + 1] = WHITE_ON_BLACK;
 	}
+
+	set_cursor(0);
 }
 
 void print_char(const char c, const uint16_t offset, const uint16_t color) {
@@ -54,7 +56,7 @@ void print_char(const char c, const uint16_t offset, const uint16_t color) {
 	vga[offset + 1] = color;
 }
 
-uint16_t kprint_at(const char str[], const int x, const int y) {
+uint16_t kprint_at(const char *str, const int x, const int y) {
 	const uint16_t position = get_cursor();
 	const uint16_t offset = (x < 0 || y < 0) ? position * 2 : (y * MAX_ROWS + x * MAX_COLS) * 2;
 
@@ -66,7 +68,7 @@ uint16_t kprint_at(const char str[], const int x, const int y) {
 	return position + i;
 }
 
-void kprint(const char str[]) {
+void kprint(const char *str) {
 	const uint16_t cursor = kprint_at(str, -1, -1);
 	set_cursor(cursor);
 }
@@ -74,6 +76,5 @@ void kprint(const char str[]) {
 int main() {
 	clear_screen();
 
-	const char msg[] = "Hi there mom!";
-	kprint(msg);
+	kprint("hi there mom!");
 }

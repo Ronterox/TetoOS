@@ -1,8 +1,6 @@
 C_SOURCES = $(wildcard kernel/*.c)
 OBJS = ${C_SOURCES:.c=.o}
 
-KERNEL_OFFSET = 0x1000
-
 CC = gcc
 ASM = nasm
 LINKER = ld -m elf_i386
@@ -27,11 +25,11 @@ run: os-image.bin
 
 kernel.bin: boot/kernel_entry.o ${OBJS}
 	# kernel main at 0x1000
-	${LINKER} -o $@ -Ttext ${KERNEL_OFFSET} $^ --oformat binary
+	${LINKER} -o $@ -T linker.ld $^ --oformat binary
 
 # debugging purposes
 kernel.elf: boot/kernel_entry.o ${OBJS}
-	${LINKER} -o $@ -Ttext ${KERNEL_OFFSET} $^
+	${LINKER} -o $@ -T linker.ld $^
 
 # connection to qemu and load our kernel-object file with symbols
 debug: os-image.bin kernel.elf
