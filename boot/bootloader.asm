@@ -2,6 +2,12 @@
 
 KERNEL_OFFSET equ 0x1000
 
+; [BOOT_DRIVE] = dl
+; bp = 0x8000
+; sp = bp
+
+; print_hex(bx = [BOOT_DRIVE])
+
 mov [BOOT_DRIVE], dl
 mov bp, 0x8000
 mov sp, bp
