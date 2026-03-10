@@ -2,11 +2,22 @@
 
 KERNEL_OFFSET equ 0x1000
 
-; [BOOT_DRIVE] = dl
-; bp = 0x8000
-; sp = bp
+%if 0 ; This is basically ignored by the preprocessor
 
-; print_hex(bx = [BOOT_DRIVE])
+#define asm_var [\w\d\[\]]
+
+#define (asm_var+)\s*=\s*(asm_var+) mov \1, \2
+#define (\w+)\((.*)\) \2\ncall \1
+#define ,\s*mov\s*(.*) \nmov \1
+
+[BOOT_DRIVE] = dl
+bp = 0x8000
+sp = bp
+
+print_hex(bx = [BOOT_DRIVE])
+disk_read(bx = KERNEL_OFFSET, dh = 2, dl = [BOOT_DRIVE])
+
+%endif
 
 mov [BOOT_DRIVE], dl
 mov bp, 0x8000
