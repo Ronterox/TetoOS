@@ -1,55 +1,79 @@
-/**
- * Read a byte from the specified port
- */
 #include <stddef.h>
+#include <stdint.h>
 
-unsigned char port_byte_in(unsigned short port) {
-	unsigned char result;
-	__asm__("in al, dx" : "=a"(result) : "d"(port));
-	return result;
-}
+#define VGA_MEMORY 0xB8000
+#define MAX_ROWS 80
+#define MAX_COLS 25
+#define WHITE_ON_BLACK 0x0f
 
-void port_byte_out(unsigned short port, unsigned char data) {
-	/* Notice how here both registers are mapped to C variables and
-	 * nothing is returned, thus, no equals '=' in the asm syntax
-	 * However we see a comma since there are two variables in the input area
-	 * and none in the 'return' area
-	 */
-	__asm__("out dx, al" : : "d"(port), "a"(data));
-}
+#define VGA_FUNC 0x3d4
+#define VGA_DATA 0x3d5
 
 #define HIGH_BYTE 14
 #define LOW_BYTE 15
-#define CURSOR_METHOD 0x3d4 // VGA control register
-#define CURSOR_DATA 0x3d5	// VGA data register
 
-#define WHITE_ON_BLACK 0x0f
+void outb(const uint16_t port, const uint16_t data) { __asm__("outb dx, al" : : "d"(port), "a"(data)); }
 
-int main() {
-	port_byte_out(CURSOR_METHOD, HIGH_BYTE);
-	int position = port_byte_in(CURSOR_DATA);
-	position = position << 8; // high byte move 8 bits
+uint16_t inb(const uint16_t port) {
+	unsigned char result;
+	__asm__("inb al, dx" : "=a"(result) : "d"(port));
+	return result;
+}
 
-	port_byte_out(CURSOR_METHOD, LOW_BYTE);
-	position += port_byte_in(CURSOR_DATA); // 0xff00 + 0x00ee = 0xffee
+uint16_t get_cursor() {
+	uint16_t position;
 
-	int offset = position * 2; // scale offset by 2 bytes = value:bg&fg
+	outb(VGA_FUNC, HIGH_BYTE);
+	position = inb(VGA_DATA) << 8; // 0x00ff << 0xff00
 
-	const char hi[] = "hi mom!";
-	char *vga = (char *)0xb8000;
+	outb(VGA_FUNC, LOW_BYTE);
+	position += inb(VGA_DATA);
 
-	int index = 0;
-	while (hi[index] != '\0') {
-		vga[offset + (index * 2)] = hi[index];
-		vga[offset + (index * 2) + 1] = WHITE_ON_BLACK;
-		index++;
+	return position;
+}
+
+void set_cursor(const uint16_t position) {
+	outb(VGA_FUNC, HIGH_BYTE);
+	outb(VGA_DATA, position >> 8); // 0xffee >> 0x00ff
+	outb(VGA_FUNC, LOW_BYTE);
+	outb(VGA_DATA, position & 0x00ff);
+}
+
+void clear_screen() {
+	char *vga = (char *)VGA_MEMORY;
+
+	for (size_t i = 0; i < MAX_ROWS * MAX_COLS; i += 2) {
+		vga[i] = ' ';
+		vga[i + 1] = WHITE_ON_BLACK;
+	}
+}
+
+void print_char(const char c, const uint16_t offset, const uint16_t color) {
+	char *vga = (char *)VGA_MEMORY;
+	vga[offset] = c;
+	vga[offset + 1] = color;
+}
+
+uint16_t kprint_at(const char str[], const int x, const int y) {
+	const uint16_t position = get_cursor();
+	const uint16_t offset = (x < 0 || y < 0) ? position * 2 : (y * MAX_ROWS + x * MAX_COLS) * 2;
+
+	size_t i;
+	for (i = 0; str[i] != '\0'; i++) {
+		print_char(str[i], offset + i * 2, WHITE_ON_BLACK);
 	}
 
-	int new_pos = position + index; // +2 chars
+	return position + i;
+}
 
-	port_byte_out(CURSOR_METHOD, HIGH_BYTE);
-	port_byte_out(CURSOR_DATA, (unsigned char)(new_pos >> 8)); // move to front 0xffee >> 0x00ff
+void kprint(const char str[]) {
+	const uint16_t cursor = kprint_at(str, -1, -1);
+	set_cursor(cursor);
+}
 
-	port_byte_out(CURSOR_METHOD, LOW_BYTE);
-	port_byte_out(CURSOR_DATA, (unsigned char)(new_pos & 0x00ff)); // 0000 1111 = false truetruetrue
+int main() {
+	clear_screen();
+
+	const char msg[] = "Hi there mom!";
+	kprint(msg);
 }
