@@ -1,11 +1,13 @@
 C_SOURCES = $(wildcard kernel/*.c)
 OBJS = ${C_SOURCES:.c=.o}
 
+
 CC = gcc
 ASM = nasm
 LINKER = ld -m elf_i386
 GDB = gdb
 QEMU = qemu-system-i386
+PP = rpreprocessor
 
 CFLAGS = -masm=intel -g -m32 -ffreestanding -fno-pic
 

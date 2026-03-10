@@ -7,6 +7,25 @@ main() {
 	nvim .
 }
 
+# @cmd Runs the debug mode of the project
+debug() {
+	pp && make run-debug
+}
+
+# @cmd Preprocess all assembly files
+pp() {
+	for input in */*.rasm; do
+		output=${input/rasm/asm}
+		echo "Preprocessing: $input into $output"
+		rpreprocessor "$input" > "$output"
+	done
+}
+
+# @cmd Runs the project
+run() {
+	pp && make run-os
+}
+
 # @cmd Launches and setups the tutorial folder
 tutorial() {
 	cd os-tutorial/ && nvim .

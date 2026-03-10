@@ -2,35 +2,31 @@
 
 KERNEL_OFFSET equ 0x1000
 
-%if 0 ; This is basically ignored by the preprocessor
-
 #define asm_var [\w\d\[\]]
+; Dereference pointer
+#define \*(\w+) [\1]
 
-#define (asm_var+)\s*=\s*(asm_var+) mov \1, \2
-#define (\w+)\((.*)\) \2\ncall \1
-#define ,\s*mov\s*(.*) \nmov \1
+; Set variables
+#define (\s*)(asm_var+)\s*=\s*(asm_var+) \1mov \2, \3
+; Function call
+#define (\s*)(\w+)\((.*)\) \1\3\n\1call \2
+; Function Params
+#define ,\s*mov \nm
 
-[BOOT_DRIVE] = dl
+; Code block
+#define \{$ :
+#define \}$ \1
+
+*BOOT_DRIVE = dl
 bp = 0x8000
 sp = bp
 
-print_hex(bx = [BOOT_DRIVE])
-disk_read(bx = KERNEL_OFFSET, dh = 2, dl = [BOOT_DRIVE])
+print_hex(bx = *BOOT_DRIVE)
+print(bx = MSG_REAL_MODE)
 
-%endif
+load_kernel()
+switch_to_pm()
 
-mov [BOOT_DRIVE], dl
-mov bp, 0x8000
-mov sp, bp
-
-mov bx, [BOOT_DRIVE]
-call print_hex
-
-mov bx, MSG_REAL_MODE
-call print
-
-call load_kernel
-call switch_to_pm
 jmp $ ; just in case
 
 %define NL 0xA, 0xD ; \n, \r
@@ -42,29 +38,22 @@ jmp $ ; just in case
 %include "boot/32bit-switch.asm"
 
 [bits 16]
-load_kernel:
-	mov bx, MSG_KERNEL_LOAD
-	call print
-
-	mov bx, KERNEL_OFFSET
-	mov dh, 2
-	mov dl, [BOOT_DRIVE]
-	call disk_read
-
+load_kernel {
+	print(bx = MSG_KERNEL_LOAD)
+	disk_read(bx = KERNEL_OFFSET, dh = 2, dl = *BOOT_DRIVE)
 	ret
+}
 
 [bits 32]
-BEGIN_PM:
-	mov ebx, MSG_PROT_MODE
-	call print_pm
+begin_pm {
+	print_pm(ebx = MSG_PROT_MODE)
 	call KERNEL_OFFSET ; this gives control to the kernel
 	jmp $
+}
 
 MSG_REAL_MODE db "Started in 16-bit real mode", NL, 0
 MSG_KERNEL_LOAD db "Loading kernel into memory...", NL, 0
-
 MSG_PROT_MODE db "Loaded 32-bit protected mode", 0
-
 BOOT_DRIVE db 0
 
 ; bootsector

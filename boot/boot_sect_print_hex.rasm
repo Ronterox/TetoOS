@@ -1,0 +1,67 @@
+; Clear comments
+#define ^;.*$ \1
+
+#define asm_var [\w\d\[\]']
+; Dereference pointer
+#define \*(\w+) [\1]
+
+; Set variables
+#define (\s*)(asm_var+)\s*=\s*(asm_var+) \1mov \2, \3
+#define (\s*)(asm_var+)\s*>>\s*(asm_var+) \1ror \2, \3
+#define (\s*)(asm_var+)\s*-=\s*(asm_var+) \1sub \2, \3
+#define (\s*)(asm_var+)\s*\+=\s*(asm_var+) \1add \2, \3
+#define (\s*)(asm_var+)\s*&=\s*(asm_var+) \1and \2, \3
+
+; Function call
+#define (\s*)(\w+)\((.*)\) \1\3\n\1call \2
+; Function Params
+#define ,\s*mov \nm
+
+; Code block
+#define \{$ :
+#define \}$ \1
+
+; receiving the data in 'dx'
+; For the examples we'll assume that we're called with dx=0x1234
+print_hex {
+	pusha
+	cx = 0
+}
+
+; Strategy: get the last char of 'dx', then convert to ASCII
+; Numeric ASCII values: '0' (ASCII 0x30) to '9' (0x39), so just add 0x30 to byte N.
+; For alphabetic characters A-F: 'A' (ASCII 0x41) to 'F' (0x46) we'll add 0x40
+; Then, move the ASCII byte to the correct position on the resulting string
+hex_loop {
+	cmp cx, 4
+	jge end_hex
+	inc cx
+
+	ax = bx
+	ax &= 0x000f ; everything zero but the last byte
+
+	al += '0' ; Turn into ascii
+
+	cmp al, 0x39 ; if a letter
+	jle step2
+
+	ax += 0x7
+}
+
+step2 {
+	di = HEX_OUT + 6
+	di -= cx
+	*di = al
+
+	bx >> 4
+	jmp hex_loop
+}
+
+end_hex {
+	print(bx = HEX_OUT)
+	popa
+	ret
+}
+
+HEX_OUT db "0x0000", NL, 0
+

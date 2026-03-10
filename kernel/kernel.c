@@ -43,7 +43,7 @@ void clear_screen() {
 	char *vga = (char *)VGA_MEMORY;
 
 	for (size_t i = 0; i < MAX_ROWS * MAX_COLS; i += 2) {
-		vga[i] = ' ';
+		vga[i] = '\0';
 		vga[i + 1] = WHITE_ON_BLACK;
 	}
 

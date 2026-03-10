@@ -1,0 +1,49 @@
+[bits 32] ; using 32-bit protected mode
+
+#define asm_var [\w\d\[\]]
+; Dereference pointer
+#define \*(\w+) [\1]
+
+; Set variables
+#define (\s*)(asm_var+)\s*=\s*(asm_var+) \1mov \2, \3
+; Or Operation
+#define (\s*)(asm_var+)\s*\|=\s*(asm_var+) \1or \2, \3
+; Add Operation
+#define (\s*)(asm_var+)\s*\+=\s*(asm_var+) \1add \2, \3
+
+; Function call
+#define (\s*)(\w+)\((.*)\) \1\3\n\1call \2
+; Function Params
+#define ,\s*mov \nm
+
+; Code block
+#define \{$ :
+#define \}$ \1
+
+; this is how constants are defined
+VIDEO_MEMORY equ 0xB8000
+WHITE_ON_BLACK equ 0x0F
+
+print_pm {
+	pusha
+	edi = VIDEO_MEMORY
+}
+
+loop_pm {
+	ah = WHITE_ON_BLACK
+	al = *ebx
+
+	cmp al, 0
+	je done_pm
+
+	*edi = ax
+	edi += 2 ; 2 bytes each vid memory block
+	inc ebx
+
+	jmp loop_pm
+}
+
+done_pm {
+	popa
+	ret
+}
