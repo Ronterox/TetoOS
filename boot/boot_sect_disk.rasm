@@ -1,4 +1,5 @@
-RETRIES equ 3
+; Clear comments
+#define \s*;.*$ \1
 
 #define asm_var [\w\d\[\]]
 
@@ -12,37 +13,23 @@ RETRIES equ 3
 ; Function Params
 #define ,\s*mov \nmov
 
+; Ifs
+#define ^(\s*)if\s+(asm_var+)\s*(..)\s*(asm_var+)\s+(\w+) \1cmp \2, \4\n\3 \5
+#define ^!= jne
+#define ^< jl
+
 ; Code block
 #define \{$ :
 #define \}$ \1
+
+RETRIES equ 3
 
 ; load 'dh' sectors from drive 'dl' into ES:BX
 ; dh given by user, es:bx given by user, es is offset=0x0 so just set bx regularly
 ; also dl given by user
 disk_read {
 	pusha
-
 	clr cx
-	jmp disk_loop
-}
-
-disk_error {
-	cmp cx, RETRIES
-	jl disk_loop
-
-	print(bx = DISK_ERROR)
-	print_hex(bh = 0, bl = ah)
-
-	jmp disk_done
-}
-
-sectors_error {
-	cmp cx, RETRIES
-	jl disk_loop
-
-	print(bx = SECTORS_ERROR)
-
-	jmp disk_done
 }
 
 disk_loop {
@@ -63,13 +50,29 @@ disk_loop {
 
 	jc disk_error
 
-	cmp al, dh ; target sectors
-	jne sectors_error
+	if al != dh sectors_error
 }
 
 disk_done {
 	popa
 	ret
+}
+
+disk_error {
+	if cx < RETRIES disk_loop
+
+	print(bx = DISK_ERROR)
+	print_hex(bh = 0, bl = ah)
+
+	jmp disk_done
+}
+
+sectors_error {
+	if cx < RETRIES disk_loop
+
+	print(bx = SECTORS_ERROR)
+
+	jmp disk_done
 }
 
 DISK_ERROR: db "Disk read error: ", 0

@@ -17,6 +17,13 @@
 ; Function Params
 #define ,\s*mov \nm
 
+; Ifs
+#define ^(\s*)if\s+(asm_var+)\s*(..)\s*(asm_var+)\s+(\w+) \1cmp \2, \4\n\3 \5
+#define ^!= jne
+#define ^>= jge
+#define ^<= jle
+#define ^< jl
+
 ; Code block
 #define \{$ :
 #define \}$ \1
@@ -33,8 +40,7 @@ print_hex {
 ; For alphabetic characters A-F: 'A' (ASCII 0x41) to 'F' (0x46) we'll add 0x40
 ; Then, move the ASCII byte to the correct position on the resulting string
 hex_loop {
-	cmp cx, 4
-	jge end_hex
+	if cx >= 4 end_hex
 	inc cx
 
 	ax = bx
@@ -42,8 +48,7 @@ hex_loop {
 
 	al += '0' ; Turn into ascii
 
-	cmp al, 0x39 ; if a letter
-	jle step2
+	if al <= 0x39 step2 ; if a letter
 
 	ax += 0x7
 }

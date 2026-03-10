@@ -10,6 +10,14 @@
 ; Function Params
 #define ,\s*mov \nm
 
+; Ifs
+#define ^(\s*)if\s+(asm_var+)\s*(..)\s*(asm_var+)\s+(\w+) \1cmp \2, \4\n\3 \5
+#define ^!= jne
+#define ^== je
+#define ^< jl
+#define ^>= jge
+#define ^<= jle
+
 ; Code block
 #define \{$ :
 #define \}$ \1
@@ -20,9 +28,7 @@ print {
 
 loop {
 	al = *bx
-
-	cmp al, 0
-	je end
+	if al == 0 end
 
 	ah = 0xE ; Is not ensured ah will be kept the same after int 0x10
 	int 0x10
