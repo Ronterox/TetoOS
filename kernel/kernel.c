@@ -56,16 +56,26 @@ void print_char(const char c, const uint16_t offset, const uint16_t color) {
 	vga[offset + 1] = color;
 }
 
-uint16_t kprint_at(const char *str, const int x, const int y) {
-	const uint16_t position = get_cursor();
-	const uint16_t offset = (x < 0 || y < 0) ? position * 2 : (y * MAX_ROWS + x * MAX_COLS) * 2;
+uint16_t kprint_at(const char *str, int x, int y) {
+	uint16_t position = get_cursor();
 
-	size_t i;
-	for (i = 0; str[i] != '\0'; i++) {
-		print_char(str[i], offset + i * 2, WHITE_ON_BLACK);
+	if (x < 0) x = position % MAX_COLS;
+	if (y < 0) y = position / MAX_COLS;
+
+	uint16_t offset = (x + MAX_COLS * y) * 2;
+
+	for (size_t i = 0; str[i] != '\0'; i++) {
+		if (str[i] == '\n') {
+			y = position / MAX_COLS + 1;
+			position = MAX_COLS * y;
+			offset = (position - i - 1) * 2;
+		} else {
+			print_char(str[i], offset + i * 2, WHITE_ON_BLACK);
+			position++;
+		}
 	}
 
-	return position + i;
+	return position;
 }
 
 void kprint(const char *str) {
@@ -75,6 +85,5 @@ void kprint(const char *str) {
 
 int main() {
 	clear_screen();
-
-	kprint("hi there mom!");
+	kprint("This is a test\n\nSee if it works\n");
 }
