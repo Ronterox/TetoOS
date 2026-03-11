@@ -36,6 +36,7 @@ disk_loop {
 	inc cx
 
 	push dx ; save because is all modified dl and dh
+	push cx
 
 	ah = 0x2
 	al = dh  ; sectors to read 1-128
@@ -46,6 +47,7 @@ disk_loop {
 	; bx is set by user for output address
 	int 0x13 ; read disk sectors
 
+	pop cx
 	pop dx
 
 	jc disk_error
@@ -58,16 +60,26 @@ disk_done {
 	ret
 }
 
+reset_disk {
+	ah = 0x0
+	int 0x13
+	ret
+}
+
 disk_error {
+	reset_disk()
+
 	if cx < RETRIES disk_loop
 
 	print(bx = DISK_ERROR)
-	print_hex(bh = 0, bl = ah)
+	print_hex(bh = 0, bl = ah) ; bh and bl form bx
 
 	jmp disk_done
 }
 
 sectors_error {
+	reset_disk()
+
 	if cx < RETRIES disk_loop
 
 	print(bx = SECTORS_ERROR)

@@ -4,7 +4,9 @@
 #define VGA_MEMORY 0xB8000
 #define MAX_COLS 80
 #define MAX_ROWS 25
+
 #define WHITE_ON_BLACK 0x0f
+#define WHITE_ON_RED 0xcf
 
 #define VGA_FUNC 0x3d4
 #define VGA_DATA 0x3d5
@@ -70,7 +72,13 @@ uint16_t kprint_at(const char *str, int x, int y) {
 			position = MAX_COLS * y;
 			offset = (position - i - 1) * 2;
 		} else {
-			print_char(str[i], offset + i * 2, WHITE_ON_BLACK);
+			const uint16_t char_pos = offset + i * 2;
+			if (char_pos > MAX_COLS * MAX_ROWS * 2) {
+				print_char('E', (MAX_ROWS * MAX_COLS * 2 - 2), WHITE_ON_RED);
+				return position;
+			}
+
+			print_char(str[i], char_pos, WHITE_ON_BLACK);
 			position++;
 		}
 	}
@@ -83,11 +91,27 @@ void kprint(const char *str) {
 	set_cursor(cursor);
 }
 
+void int_to_ascii(const int n, char *str, const size_t i) {
+	if (n < 10) {
+		str[i] = n + '0';
+		str[i + 1] = '\0';
+		return;
+	}
+	str[i] = (n % 10) + '0';
+	int_to_ascii(n / 10, str, i + 1);
+}
+
+void itoa(int n, char *str) { int_to_ascii(n, str, 0); }
+
 int main() {
 	clear_screen();
-	kprint_at("X", 1, 6);
-	kprint_at("This text spans multiple lines", 75, 10);
-	kprint_at("There is a line\nbreak", 0, 20);
-	kprint("There is a line\nbreak");
-	kprint_at("What happens when we run out of space?", 45, 24);
+
+	for (size_t i = 0; i < 24; i++) {
+		char str[255];
+		itoa(i, str);
+		kprint_at(str, 0, i);
+	}
+
+	kprint_at("This text forces the kernel to scroll. Row 0 will disappear. ", 60, 24);
+	kprint("And with this text, the kernel will scroll again, and row 1 will disappear too!");
 }
