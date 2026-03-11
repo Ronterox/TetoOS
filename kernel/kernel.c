@@ -91,17 +91,24 @@ void kprint(const char *str) {
 	set_cursor(cursor);
 }
 
-void int_to_ascii(const int n, char *str, const size_t i) {
+int int_to_ascii(const int n, char *str, const size_t i) {
 	if (n < 10) {
 		str[i] = n + '0';
 		str[i + 1] = '\0';
-		return;
+		return i;
 	}
 	str[i] = (n % 10) + '0';
-	int_to_ascii(n / 10, str, i + 1);
+	return int_to_ascii(n / 10, str, i + 1);
 }
 
-void itoa(int n, char *str) { int_to_ascii(n, str, 0); }
+void itoa(int n, char *str) {
+	const size_t len = int_to_ascii(n, str, 0);
+	for (size_t i = 0; i < len; ++i) {
+		const char tmp = str[i];
+		str[i] = str[len];
+		str[len] = tmp;
+	}
+}
 
 int main() {
 	clear_screen();

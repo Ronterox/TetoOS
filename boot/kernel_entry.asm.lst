@@ -1,0 +1,4 @@
+     1                                  [bits 32]
+     2                                  [extern main] ; linkable not compiled on here
+     3 00000000 E8(00000000)            call main ; call, the linker will know where it's placed in memory
+     4 00000005 EBFE                    jmp $
