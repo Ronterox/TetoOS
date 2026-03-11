@@ -5,6 +5,8 @@
 #define MAX_COLS 80
 #define MAX_ROWS 25
 
+#define MAX_VGA MAX_COLS * MAX_ROWS * 2
+
 #define WHITE_ON_BLACK 0x0f
 #define WHITE_ON_RED 0xcf
 
@@ -13,6 +15,29 @@
 
 #define HIGH_BYTE 14
 #define LOW_BYTE 15
+
+#define DO(n) for (size_t i = 0; i < n; ++i)
+
+int int_to_ascii(const int n, char *str, const size_t i) {
+	if (n < 10) {
+		str[i] = n + '0';
+		str[i + 1] = '\0';
+		return i;
+	}
+	str[i] = (n % 10) + '0';
+	return int_to_ascii(n / 10, str, i + 1);
+}
+
+void itoa(int n, char *str) {
+	const size_t len = int_to_ascii(n, str, 0);
+	DO(len) { // Reverse it to the correct order
+		const char tmp = str[i];
+		str[i] = str[len];
+		str[len] = tmp;
+	}
+}
+
+void memcopy(const char *source, char *dest, const int nbytes) { DO(nbytes) dest[i] = source[i]; }
 
 void outb(const uint16_t port, const uint16_t data) { __asm__("outb dx, al" : : "d"(port), "a"(data)); }
 
@@ -73,9 +98,21 @@ uint16_t kprint_at(const char *str, int x, int y) {
 			offset = (position - i - 1) * 2;
 		} else {
 			const uint16_t char_pos = offset + i * 2;
-			if (char_pos > MAX_COLS * MAX_ROWS * 2) {
-				print_char('E', (MAX_ROWS * MAX_COLS * 2 - 2), WHITE_ON_RED);
-				return position;
+			if (char_pos > MAX_VGA) {
+				print_char('E', MAX_VGA - 2, WHITE_ON_RED);
+
+				DO(MAX_ROWS + 1) { // Scroll down
+					const char *source = (char *)VGA_MEMORY + i * MAX_COLS * 2;
+					char *destination = (char *)VGA_MEMORY + (i - 1) * MAX_COLS * 2;
+
+					memcopy(source, destination, MAX_COLS * 2);
+				}
+
+				offset -= MAX_COLS * 2;
+				position = offset / 2 + i;
+				i--;
+
+				continue;
 			}
 
 			print_char(str[i], char_pos, WHITE_ON_BLACK);
@@ -91,34 +128,17 @@ void kprint(const char *str) {
 	set_cursor(cursor);
 }
 
-int int_to_ascii(const int n, char *str, const size_t i) {
-	if (n < 10) {
-		str[i] = n + '0';
-		str[i + 1] = '\0';
-		return i;
-	}
-	str[i] = (n % 10) + '0';
-	return int_to_ascii(n / 10, str, i + 1);
-}
-
-void itoa(int n, char *str) {
-	const size_t len = int_to_ascii(n, str, 0);
-	for (size_t i = 0; i < len; ++i) {
-		const char tmp = str[i];
-		str[i] = str[len];
-		str[len] = tmp;
-	}
-}
-
 int main() {
 	clear_screen();
 
-	for (size_t i = 0; i < 24; i++) {
+	DO(25) {
 		char str[255];
 		itoa(i, str);
 		kprint_at(str, 0, i);
 	}
 
-	kprint_at("This text forces the kernel to scroll. Row 0 will disappear. ", 60, 24);
+	const uint16_t cursor = kprint_at("This text forces the kernel to scroll. Row 0 will disappear. ", 60, 24);
+	set_cursor(cursor);
+
 	kprint("And with this text, the kernel will scroll again, and row 1 will disappear too!");
 }
